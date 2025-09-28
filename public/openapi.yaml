@@ -1,0 +1,607 @@
+openapi: 3.0.3
+info:
+  title: Jarvis MCP Server API
+  description: Production-ready Express.js backend server for MCP agent with Google Workspace and HubSpot integrations
+  version: 1.0.0
+  contact:
+    name: Jarvis MCP Server
+servers:
+  - url: https://your-deployment-url.replit.app
+    description: Production server
+  - url: http://localhost:5000
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Check if the server is running and healthy
+      security: []
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                data:
+                  status: "healthy"
+                  timestamp: "2025-01-27T10:30:00.000Z"
+                  version: "1.0.0"
+                  uptime: 3600
+                message: "Jarvis MCP Server is running"
+
+  # Google Workspace - Documents
+  /api/google/docs:
+    post:
+      summary: Create a new Google Document
+      tags: [Google Docs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+              required:
+                - title
+            example:
+              title: "My New Document"
+      responses:
+        '201':
+          description: Document created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/google/docs/{documentId}:
+    get:
+      summary: Get a Google Document
+      tags: [Google Docs]
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    patch:
+      summary: Update a Google Document
+      tags: [Google Docs]
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+              required:
+                - content
+      responses:
+        '200':
+          description: Document updated successfully
+
+  # Google Workspace - Spreadsheets
+  /api/google/sheets:
+    post:
+      summary: Create a new Google Spreadsheet
+      tags: [Google Sheets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+              required:
+                - title
+      responses:
+        '201':
+          description: Spreadsheet created successfully
+
+  /api/google/sheets/{spreadsheetId}:
+    get:
+      summary: Get a Google Spreadsheet
+      tags: [Google Sheets]
+      parameters:
+        - name: spreadsheetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Spreadsheet retrieved successfully
+    patch:
+      summary: Update a Google Spreadsheet
+      tags: [Google Sheets]
+      parameters:
+        - name: spreadsheetId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                range:
+                  type: string
+                values:
+                  type: array
+                  items:
+                    type: array
+              required:
+                - range
+                - values
+      responses:
+        '200':
+          description: Spreadsheet updated successfully
+
+  # Google Drive
+  /api/google/drive/files:
+    get:
+      summary: List files in Google Drive
+      tags: [Google Drive]
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Files retrieved successfully
+
+  /api/google/drive/files/{fileId}:
+    get:
+      summary: Get a file from Google Drive
+      tags: [Google Drive]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File retrieved successfully
+    delete:
+      summary: Delete a file from Google Drive
+      tags: [Google Drive]
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File deleted successfully
+
+  # Google Calendar
+  /api/google/calendar/events:
+    get:
+      summary: List calendar events
+      tags: [Google Calendar]
+      parameters:
+        - name: timeMin
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: timeMax
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Events retrieved successfully
+    post:
+      summary: Create a calendar event
+      tags: [Google Calendar]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+                  minLength: 1
+                description:
+                  type: string
+                startDateTime:
+                  type: string
+                  format: date-time
+                endDateTime:
+                  type: string
+                  format: date-time
+                timeZone:
+                  type: string
+                  default: "UTC"
+              required:
+                - summary
+                - startDateTime
+                - endDateTime
+      responses:
+        '201':
+          description: Event created successfully
+
+  /api/google/calendar/events/{eventId}:
+    delete:
+      summary: Delete a calendar event
+      tags: [Google Calendar]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event deleted successfully
+
+  # HubSpot - Contacts
+  /api/hubspot/contacts:
+    get:
+      summary: List HubSpot contacts
+      tags: [HubSpot Contacts]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Contacts retrieved successfully
+    post:
+      summary: Create a new HubSpot contact
+      tags: [HubSpot Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                company:
+                  type: string
+      responses:
+        '201':
+          description: Contact created successfully
+
+  /api/hubspot/contacts/{contactId}:
+    get:
+      summary: Get a HubSpot contact
+      tags: [HubSpot Contacts]
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contact retrieved successfully
+    patch:
+      summary: Update a HubSpot contact
+      tags: [HubSpot Contacts]
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                company:
+                  type: string
+      responses:
+        '200':
+          description: Contact updated successfully
+    delete:
+      summary: Delete a HubSpot contact
+      tags: [HubSpot Contacts]
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contact deleted successfully
+
+  # HubSpot - Companies
+  /api/hubspot/companies:
+    get:
+      summary: List HubSpot companies
+      tags: [HubSpot Companies]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Companies retrieved successfully
+    post:
+      summary: Create a new HubSpot company
+      tags: [HubSpot Companies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                domain:
+                  type: string
+                industry:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+              required:
+                - name
+      responses:
+        '201':
+          description: Company created successfully
+
+  /api/hubspot/companies/{companyId}:
+    get:
+      summary: Get a HubSpot company
+      tags: [HubSpot Companies]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Company retrieved successfully
+    patch:
+      summary: Update a HubSpot company
+      tags: [HubSpot Companies]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                domain:
+                  type: string
+                industry:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+      responses:
+        '200':
+          description: Company updated successfully
+    delete:
+      summary: Delete a HubSpot company
+      tags: [HubSpot Companies]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Company deleted successfully
+
+  # HubSpot - Deals
+  /api/hubspot/deals:
+    get:
+      summary: List HubSpot deals
+      tags: [HubSpot Deals]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Deals retrieved successfully
+    post:
+      summary: Create a new HubSpot deal
+      tags: [HubSpot Deals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dealname:
+                  type: string
+                  minLength: 1
+                amount:
+                  type: string
+                dealstage:
+                  type: string
+                closedate:
+                  type: string
+                  format: date
+              required:
+                - dealname
+      responses:
+        '201':
+          description: Deal created successfully
+
+  /api/hubspot/deals/{dealId}:
+    get:
+      summary: Get a HubSpot deal
+      tags: [HubSpot Deals]
+      parameters:
+        - name: dealId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deal retrieved successfully
+    patch:
+      summary: Update a HubSpot deal
+      tags: [HubSpot Deals]
+      parameters:
+        - name: dealId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dealname:
+                  type: string
+                amount:
+                  type: string
+                dealstage:
+                  type: string
+                closedate:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Deal updated successfully
+    delete:
+      summary: Delete a HubSpot deal
+      tags: [HubSpot Deals]
+      parameters:
+        - name: dealId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deal deleted successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Use your MCP_API_KEY as the bearer token
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - success
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          enum:
+            - UNAUTHORIZED
+            - VALIDATION_ERROR
+            - RATE_LIMIT_EXCEEDED
+            - INTERNAL_SERVER_ERROR
+        message:
+          type: string
+      required:
+        - success
+        - error
+        - message
